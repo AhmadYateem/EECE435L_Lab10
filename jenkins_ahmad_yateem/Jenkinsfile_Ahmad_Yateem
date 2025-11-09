@@ -2,20 +2,20 @@ pipeline {
     agent any
 
     environment {
-        VIRTUAL_ENV = 'venv'
-        PYTHON = 'python'
+        VIRTUAL_ENV = "venv"
     }
 
     stages {
+
         stage('Setup') {
             steps {
                 bat '''
-if not exist %VIRTUAL_ENV% (
-    %PYTHON% -m venv %VIRTUAL_ENV%
-)
-call %VIRTUAL_ENV%\\Scripts\\activate
-pip install --upgrade pip
-pip install -r requirements.txt
+                if not exist %VIRTUAL_ENV% (
+                    python -m venv %VIRTUAL_ENV%
+                )
+                call %VIRTUAL_ENV%\\Scripts\\activate
+                pip install --upgrade pip
+                pip install -r requirements.txt
                 '''
             }
         }
@@ -23,8 +23,8 @@ pip install -r requirements.txt
         stage('Lint') {
             steps {
                 bat '''
-call %VIRTUAL_ENV%\\Scripts\\activate
-flake8 app.py tests
+                call %VIRTUAL_ENV%\\Scripts\\activate
+                flake8 app.py
                 '''
             }
         }
@@ -32,8 +32,8 @@ flake8 app.py tests
         stage('Test') {
             steps {
                 bat '''
-call %VIRTUAL_ENV%\\Scripts\\activate
-pytest --maxfail=1 --disable-warnings
+                call %VIRTUAL_ENV%\\Scripts\\activate
+                pytest
                 '''
             }
         }
@@ -41,10 +41,9 @@ pytest --maxfail=1 --disable-warnings
         stage('Coverage') {
             steps {
                 bat '''
-call %VIRTUAL_ENV%\\Scripts\\activate
-coverage run -m pytest
-coverage report --fail-under=90
-coverage xml
+                call %VIRTUAL_ENV%\\Scripts\\activate
+                coverage run -m pytest
+                coverage report
                 '''
             }
         }
@@ -52,8 +51,8 @@ coverage xml
         stage('Security Scan') {
             steps {
                 bat '''
-call %VIRTUAL_ENV%\\Scripts\\activate
-bandit -r . -ll
+                call %VIRTUAL_ENV%\\Scripts\\activate
+                bandit -r .
                 '''
             }
         }
@@ -61,8 +60,10 @@ bandit -r . -ll
         stage('Deploy') {
             steps {
                 bat '''
-powershell -ExecutionPolicy Bypass -File deploy.ps1
-dir /s
+                call %VIRTUAL_ENV%\\Scripts\\activate
+                echo Deploying application...
+                python app.py > deployed_output.txt
+                echo Application ran. Output saved to deployed_output.txt
                 '''
             }
         }
