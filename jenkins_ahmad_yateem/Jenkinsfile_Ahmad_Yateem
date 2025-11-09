@@ -3,42 +3,67 @@ pipeline {
 
     environment {
         VIRTUAL_ENV = 'venv'
+        PYTHON = 'python'
     }
 
     stages {
         stage('Setup') {
             steps {
-                script {
-                    if (!fileExists("${env.WORKSPACE}/${VIRTUAL_ENV}")) {
-                        sh "python -m venv ${VIRTUAL_ENV}"
-                    }
-                    sh "source ${VIRTUAL_ENV}/bin/activate && pip install -r requirements.txt"
-                }
+                bat '''
+if not exist %VIRTUAL_ENV% (
+    %PYTHON% -m venv %VIRTUAL_ENV%
+)
+call %VIRTUAL_ENV%\\Scripts\\activate
+pip install --upgrade pip
+pip install -r requirements.txt
+                '''
             }
         }
 
         stage('Lint') {
             steps {
-                script {
-                    sh "source ${VIRTUAL_ENV}/bin/activate && flake8 app.py"
-                }
+                bat '''
+call %VIRTUAL_ENV%\\Scripts\\activate
+flake8 app.py tests
+                '''
             }
         }
 
         stage('Test') {
             steps {
-                script {
-                    sh "source ${VIRTUAL_ENV}/bin/activate && pytest"
-                }
+                bat '''
+call %VIRTUAL_ENV%\\Scripts\\activate
+pytest --maxfail=1 --disable-warnings
+                '''
+            }
+        }
+
+        stage('Coverage') {
+            steps {
+                bat '''
+call %VIRTUAL_ENV%\\Scripts\\activate
+coverage run -m pytest
+coverage report --fail-under=90
+coverage xml
+                '''
+            }
+        }
+
+        stage('Security Scan') {
+            steps {
+                bat '''
+call %VIRTUAL_ENV%\\Scripts\\activate
+bandit -r . -ll
+                '''
             }
         }
 
         stage('Deploy') {
             steps {
-                script {
-                    // Deployment logic, e.g., pushing to a remote server
-                    echo "Deploying application..."
-                }
+                bat '''
+powershell -ExecutionPolicy Bypass -File deploy.ps1
+dir /s
+                '''
             }
         }
     }
