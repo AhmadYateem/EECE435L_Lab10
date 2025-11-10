@@ -3,6 +3,8 @@ pipeline {
 
     environment {
         VIRTUAL_ENV = "venv"
+        // Ensure Python can import from project root during tests
+        PYTHONPATH = "${WORKSPACE}\\jenkins_ahmad_yateem"
     }
 
     stages {
