@@ -84,8 +84,9 @@ pipeline {
                 dir('jenkins_ahmad_yateem') {
                     bat '''
                     call %VIRTUAL_ENV%\\Scripts\\activate
-                    rem Exclude virtual environment and tests from Bandit scan
-                    bandit -r . -x %VIRTUAL_ENV%,tests
+                    rem Exclude virtual environment and tests from Bandit scan (use absolute paths on Windows)
+                    set "EXCLUDES=%CD%\\venv,%CD%\\tests"
+                    bandit -x "%EXCLUDES%" -r .
                     '''
                 }
             }
